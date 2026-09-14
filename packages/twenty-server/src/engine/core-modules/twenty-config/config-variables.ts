@@ -252,7 +252,7 @@ export class ConfigVariables {
       "Enable or disable requests to twenty-icons to get companies' icons",
     type: ConfigVariableType.BOOLEAN,
   })
-  ALLOW_REQUESTS_TO_TWENTY_ICONS = true;
+  ALLOW_REQUESTS_TO_TWENTY_ICONS = false;
 
   @ConfigVariablesMetadata({
     group: ConfigVariablesGroup.MICROSOFT_AUTH,
@@ -891,7 +891,7 @@ export class ConfigVariables {
     type: ConfigVariableType.BOOLEAN,
   })
   @IsOptional()
-  TELEMETRY_ENABLED = true;
+  TELEMETRY_ENABLED = false;
 
   @ConfigVariablesMetadata({
     group: ConfigVariablesGroup.LOGGING,
@@ -1601,7 +1601,7 @@ export class ConfigVariables {
     type: ConfigVariableType.BOOLEAN,
   })
   @IsOptional()
-  MARKETPLACE_CATALOG_SYNC_CRON_ENABLED = true;
+  MARKETPLACE_CATALOG_SYNC_CRON_ENABLED = false;
 
   @ConfigVariablesMetadata({
     group: ConfigVariablesGroup.RATE_LIMITING,
