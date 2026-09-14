@@ -3,8 +3,10 @@ name: twenty
 services:
   server:
     image: crm-wecypher:${TAG:-crm-wecypher}
+    # Coolify runs compose with --project-directory = git root, so context
+    # must be that root. ../.. would resolve to / and fail with lstat /packages.
     build:
-      context: ../..
+      context: .
       dockerfile: packages/twenty-docker/twenty/Dockerfile
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
