@@ -102,14 +102,13 @@ RUN mkdir -p /app/packages/twenty-front/src/locales/generated \
       printf 'export const messages = {};\n' \
         > "/app/packages/twenty-front/src/locales/generated/${locale}.ts"; \
     done
-# To skip the memory-intensive frontend build, pre-build on the host:
-#   yarn workspace twenty-front run build
-# The check below will use packages/twenty-front/build/ if it already exists.
-RUN if [ -d /app/packages/twenty-front/build ]; then \
-      echo "Using pre-built frontend from host"; \
-    else \
-      yarn workspace twenty-front run build; \
-    fi
+# Official `nx build twenty-front` dependsOn ^build (twenty-ui, twenty-sdk).
+# Skipping those is a known Docker break after twenty-front started importing
+# twenty-sdk: https://github.com/twentyhq/twenty/pull/17649
+RUN yarn workspace twenty-ui run build
+RUN yarn workspace twenty-sdk run build
+RUN yarn workspace twenty-front-component-renderer run build
+RUN yarn workspace twenty-front run build
 
 
 # ===========================================================================
