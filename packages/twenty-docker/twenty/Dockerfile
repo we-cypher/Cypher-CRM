@@ -91,8 +91,9 @@ COPY ./packages/twenty-ui /app/packages/twenty-ui
 COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-sdk /app/packages/twenty-sdk
 COPY ./packages/twenty-client-sdk /app/packages/twenty-client-sdk
-RUN yarn workspace twenty-shared run build
-# Same as emails: do not call `lingui compile` in this slim stage.
+# Catalogs are already in git. Official `lingui:extract` / `lingui:compile`
+# dependOn ^build (generateBarrels + tsgo) and Coolify hides that stderr.
+# Empty generated modules are enough for Vite to resolve the locale imports.
 RUN mkdir -p /app/packages/twenty-front/src/locales/generated \
  && for locale in \
       en pseudo-en af-ZA ar-SA ca-ES cs-CZ da-DK de-DE el-GR es-ES fi-FI \
@@ -102,19 +103,18 @@ RUN mkdir -p /app/packages/twenty-front/src/locales/generated \
       printf 'export const messages = {};\n' \
         > "/app/packages/twenty-front/src/locales/generated/${locale}.ts"; \
     done
-# Official `nx build twenty-front` dependsOn ^build (twenty-ui, twenty-sdk).
-# Skipping those is a known Docker break after twenty-front started importing
-# twenty-sdk: https://github.com/twentyhq/twenty/pull/17649
-RUN yarn workspace twenty-ui run build
-# package.json "build" is `vite build` with no vite.config.ts (fails).
-# Front only needs define + front-component for the renderer.
-RUN yarn workspace twenty-sdk exec vite build -c vite.config.define.ts \
- && yarn workspace twenty-sdk exec vite build -c vite.config.front-component.ts
-# sandbox HTML is produced by nx sandbox:prebuild and gitignored except the .d.ts
-RUN printf 'export const FRONT_COMPONENT_SANDBOX_DOCUMENT = "";\n' \
-      > /app/packages/twenty-front-component-renderer/src/remote/sandbox/generated/frontComponentSandboxDocument.ts
-RUN yarn workspace twenty-front-component-renderer run build
-RUN yarn workspace twenty-front run build
+# Same command as twentyhq/twenty packages/twenty-docker/twenty/Dockerfile.
+# `nx build twenty-front` dependsOn ^build: shared (barrels + Vite + tsgo),
+# twenty-ui, twenty-sdk (all Vite configs), renderer sandbox:prebuild, then
+# front Vite. Manual `yarn workspace` steps skip those generate scripts and
+# fail one package later each deploy (see twentyhq/twenty#17649).
+# Stream Nx output so a failed RUN still prints the real error under BuildKit.
+RUN if [ -d /app/packages/twenty-front/build ]; then \
+      echo "Using pre-built frontend from host"; \
+    else \
+      NODE_OPTIONS="--max-old-space-size=8192" \
+        npx nx build twenty-front --skip-nx-cache --output-style=stream; \
+    fi
 
 
 # ===========================================================================
