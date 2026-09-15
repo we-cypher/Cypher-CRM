@@ -106,7 +106,10 @@ RUN mkdir -p /app/packages/twenty-front/src/locales/generated \
 # Skipping those is a known Docker break after twenty-front started importing
 # twenty-sdk: https://github.com/twentyhq/twenty/pull/17649
 RUN yarn workspace twenty-ui run build
-RUN yarn workspace twenty-sdk run build
+# package.json "build" is `vite build` with no vite.config.ts (fails).
+# Front only needs define + front-component for the renderer.
+RUN yarn workspace twenty-sdk exec vite build -c vite.config.define.ts \
+ && yarn workspace twenty-sdk exec vite build -c vite.config.front-component.ts
 RUN yarn workspace twenty-front-component-renderer run build
 RUN yarn workspace twenty-front run build
 
