@@ -79,15 +79,15 @@ COPY ./packages/twenty-ui /app/packages/twenty-ui
 COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-sdk /app/packages/twenty-sdk
 COPY ./packages/twenty-client-sdk /app/packages/twenty-client-sdk
-RUN npx nx build twenty-shared --skip-nx-cache && \
-    npx nx run twenty-front:lingui:compile
+RUN yarn workspace twenty-shared run build
+RUN yarn workspace twenty-front exec lingui compile --typescript
 # To skip the memory-intensive frontend build, pre-build on the host:
-#   npx nx build twenty-front
+#   yarn workspace twenty-front run build
 # The check below will use packages/twenty-front/build/ if it already exists.
 RUN if [ -d /app/packages/twenty-front/build ]; then \
       echo "Using pre-built frontend from host"; \
     else \
-      NODE_OPTIONS="--max-old-space-size=8192" npx nx build twenty-front; \
+      yarn workspace twenty-front run build; \
     fi
 
 
