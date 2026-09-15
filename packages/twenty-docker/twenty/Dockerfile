@@ -50,7 +50,9 @@ COPY ./packages/twenty-server /app/packages/twenty-server
 # Split RUNs so Coolify logs show which command failed.
 RUN yarn workspace twenty-shared run build
 RUN yarn workspace twenty-server exec lingui compile --typescript
-RUN yarn workspace twenty-emails exec lingui compile --typescript
+# Emails lingui.config imports @lingui/format-po (not a runtime dep). Use the
+# hoisted CLI from the workspace root, not `workspace twenty-emails exec`.
+RUN yarn exec --cwd=packages/twenty-emails -- lingui compile --typescript
 
 # client-sdk package.json build also runs tsgo; Vite outputs are enough to copy.
 RUN yarn workspace twenty-client-sdk exec vite build \
