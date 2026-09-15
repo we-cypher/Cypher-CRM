@@ -44,13 +44,24 @@ COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-client-sdk /app/packages/twenty-client-sdk
 COPY ./packages/twenty-server /app/packages/twenty-server
 
-# lingui.config.ts imports twenty-shared/translations (dist). Extract is not
-# needed in the image — .po catalogs are already in the repo.
-RUN npx nx build twenty-shared --skip-nx-cache && \
-    npx nx run twenty-server:lingui:compile && \
-    npx nx run twenty-emails:lingui:compile
+# Skip `nx build twenty-shared` here: it runs generateBarrels + tsgo and
+# fails in this slim stage. Vite is enough for twenty-shared/translations.
+# Skip `nx run *:lingui:compile` too — that target dependsOn ^build (same trap).
+# Split RUNs so Coolify logs show which command failed.
+RUN yarn workspace twenty-shared run build
+RUN yarn workspace twenty-server exec lingui compile --typescript
+RUN yarn workspace twenty-emails exec lingui compile --typescript
 
-RUN npx nx run twenty-server:build
+# client-sdk package.json build also runs tsgo; Vite outputs are enough to copy.
+RUN yarn workspace twenty-client-sdk exec vite build \
+ && yarn workspace twenty-client-sdk exec vite build -c vite.metadata.config.ts
+RUN yarn workspace twenty-server exec rimraf dist \
+ && yarn workspace twenty-server exec nest build --path ./tsconfig.build.json \
+ && mkdir -p /app/packages/twenty-server/dist/assets/twenty-client-sdk \
+ && cp /app/packages/twenty-client-sdk/package.json \
+      /app/packages/twenty-server/dist/assets/twenty-client-sdk/ \
+ && cp -r /app/packages/twenty-client-sdk/dist \
+      /app/packages/twenty-server/dist/assets/twenty-client-sdk/dist
 
 # Clean server build output (type declarations and compiled tests are not needed at runtime;
 # source maps are kept because twenty-infra extracts them from the image for Sentry uploads)
