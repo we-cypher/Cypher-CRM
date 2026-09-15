@@ -110,6 +110,9 @@ RUN yarn workspace twenty-ui run build
 # Front only needs define + front-component for the renderer.
 RUN yarn workspace twenty-sdk exec vite build -c vite.config.define.ts \
  && yarn workspace twenty-sdk exec vite build -c vite.config.front-component.ts
+# sandbox HTML is produced by nx sandbox:prebuild and gitignored except the .d.ts
+RUN printf 'export const FRONT_COMPONENT_SANDBOX_DOCUMENT = "";\n' \
+      > /app/packages/twenty-front-component-renderer/src/remote/sandbox/generated/frontComponentSandboxDocument.ts
 RUN yarn workspace twenty-front-component-renderer run build
 RUN yarn workspace twenty-front run build
 
