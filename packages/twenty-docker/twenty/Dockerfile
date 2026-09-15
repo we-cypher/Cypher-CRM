@@ -92,7 +92,16 @@ COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-sdk /app/packages/twenty-sdk
 COPY ./packages/twenty-client-sdk /app/packages/twenty-client-sdk
 RUN yarn workspace twenty-shared run build
-RUN yarn workspace twenty-front exec lingui compile --typescript
+# Same as emails: do not call `lingui compile` in this slim stage.
+RUN mkdir -p /app/packages/twenty-front/src/locales/generated \
+ && for locale in \
+      en pseudo-en af-ZA ar-SA ca-ES cs-CZ da-DK de-DE el-GR es-ES fi-FI \
+      fr-FR he-IL hu-HU hy-AM it-IT ja-JP ko-KR nl-NL no-NO pl-PL pt-BR \
+      pt-PT ro-RO ru-RU sr-Cyrl sr-Latn sv-SE tr-TR uk-UA uz-UZ vi-VN \
+      zh-CN zh-TW; do \
+      printf 'export const messages = {};\n' \
+        > "/app/packages/twenty-front/src/locales/generated/${locale}.ts"; \
+    done
 # To skip the memory-intensive frontend build, pre-build on the host:
 #   yarn workspace twenty-front run build
 # The check below will use packages/twenty-front/build/ if it already exists.
