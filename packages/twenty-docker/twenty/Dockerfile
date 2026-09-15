@@ -50,10 +50,18 @@ COPY ./packages/twenty-server /app/packages/twenty-server
 # Split RUNs so Coolify logs show which command failed.
 RUN yarn workspace twenty-shared run build
 RUN yarn workspace twenty-server exec lingui compile --typescript
-# Same CLI that just compiled twenty-server; emails has no hoisted `lingui` bin.
-RUN yarn workspace twenty-server exec -- \
-      lingui compile --typescript \
-      --config /app/packages/twenty-emails/lingui.config.ts
+# Do not run `lingui compile` for emails in Docker — the CLI is not on that
+# workspace PATH and Coolify hides the real error. Empty catalogs fall back
+# to the English source strings in the templates.
+RUN mkdir -p /app/packages/twenty-emails/src/locales/generated \
+ && for locale in \
+      en pseudo-en af-ZA ar-SA ca-ES cs-CZ da-DK de-DE el-GR es-ES fi-FI \
+      fr-FR he-IL hu-HU hy-AM it-IT ja-JP ko-KR nl-NL no-NO pl-PL pt-BR \
+      pt-PT ro-RO ru-RU sr-Cyrl sr-Latn sv-SE tr-TR uk-UA uz-UZ vi-VN \
+      zh-CN zh-TW; do \
+      printf 'export const messages = {};\n' \
+        > "/app/packages/twenty-emails/src/locales/generated/${locale}.ts"; \
+    done
 RUN yarn workspace twenty-emails run build
 
 # client-sdk package.json build also runs tsgo; Vite outputs are enough to copy.
