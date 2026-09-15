@@ -12,8 +12,10 @@ services:
       target: twenty
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
-    ports:
-      - "3000:3000"
+    # Coolify proxy reaches the container on the Docker network. Publishing
+    # 3000:3000 binds the host and fails when another app already owns :3000.
+    expose:
+      - "3000"
     environment:
       NODE_PORT: 3000
       PG_DATABASE_URL: postgres://${PG_DATABASE_USER:-postgres}:${PG_DATABASE_PASSWORD:-postgres}@${PG_DATABASE_HOST:-db}:${PG_DATABASE_PORT:-5432}/${PG_DATABASE_NAME:-default}
