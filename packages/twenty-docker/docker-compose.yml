@@ -8,6 +8,8 @@ services:
     build:
       context: .
       dockerfile: packages/twenty-docker/twenty/Dockerfile
+      # Last stage is twenty-app-dev (s6 + GitHub download). Production is `twenty`.
+      target: twenty
     volumes:
       - server-local-data:/app/packages/twenty-server/.local-storage
     ports:
